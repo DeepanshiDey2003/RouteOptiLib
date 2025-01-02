@@ -4,6 +4,7 @@ import com.example.routeoptilib.utils.Constant;
 import com.moveinsync.MisBuidUtils;
 import com.moveinsync.ets.models.Duty;
 import com.moveinsync.tripsheet.models.TripsheetDTOV2;
+import com.moveinsync.vehiclemanagementservice.models.DriverMapping;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +45,30 @@ public class ExternalApiService {
         try {
             ResponseEntity<List<VehicleDTO>> response = restTemplate.exchange(url, HttpMethod.GET, entity, new ParameterizedTypeReference<>() {
             });
+            return response.getBody() != null ? response.getBody() : List.of();
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+    
+    public List<DriverMapping> getDriverData(List<String> buIds) {
+        
+        String url = UriComponentsBuilder.fromHttpUrl(vmsApiUrl + "/driver-details")
+                .queryParam("buIds", String.join(",", buIds))
+                .toUriString();
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(Constant.X_WIS_TOKEN, Constant.X_WIS_STATIC_TOKEN);
+        
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        
+        try {
+            ResponseEntity<List<DriverMapping>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<>() {}
+            );
             return response.getBody() != null ? response.getBody() : List.of();
         } catch (Exception e) {
             return List.of();

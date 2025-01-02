@@ -1,6 +1,8 @@
 package com.example.routeoptilib.services;
 
 import com.example.routeoptilib.models.Block;
+import com.moveinsync.ets.models.Duty;
+import com.moveinsync.ets.models.EmptyLeg;
 import com.moveinsync.tripsheet.models.TripsheetDTOV2;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +29,26 @@ public class RouteService {
         for (String vehicleRegistration : vehicleRegistrations) {
             vehicleTripDetailsOfAllVehiclesForDay.addAll(externalApiService.getVehicleTripsForTheDay(vehicleRegistration, getStartTimestampOfDay(), getEndTimestampOfDay()));
         }
+        
+        // Create blocks for each cab and driver when both are occupied (tripsheet exists)
         for (TripsheetDTOV2 tripsheetDTOV2 : vehicleTripDetailsOfAllVehiclesForDay) {
             Block cabBlock = new Block(tripsheetDTOV2.getCab().getRegistration(), tripsheetDTOV2.getStartTime().getTime(), tripsheetDTOV2.getEndTime().getTime());
             Block driverBlock = new Block(tripsheetDTOV2.getCab().getDriver().getGuid(), tripsheetDTOV2.getStartTime().getTime(), tripsheetDTOV2.getEndTime().getTime());
             cabBlocks.add(cabBlock);
             driverBlocks.add(driverBlock);
         }
+        
+        // Create blocks for each cab and driver when both are occupied (emptyLeg exists)
+        for (TripsheetDTOV2 tripsheetDTOV2 : vehicleTripDetailsOfAllVehiclesForDay) {
+            Duty duty = externalApiService.getDutyForTrip(buid, tripsheetDTOV2.getGuid());
+            for (EmptyLeg emptyLeg : duty.getEmptyLegs()) {
+                Block emptyLegCabBlock = new Block(tripsheetDTOV2.getCab().getRegistration(), emptyLeg.getStartTime(), emptyLeg.getEndTime());
+                Block emptyLegDriverBlock = new Block(tripsheetDTOV2.getCab().getDriver().getGuid(), emptyLeg.getStartTime(), emptyLeg.getEndTime());
+                cabBlocks.add(emptyLegCabBlock);
+                driverBlocks.add(emptyLegDriverBlock);
+            }
+        }
+        
         return "Optimised Route";
     }
     

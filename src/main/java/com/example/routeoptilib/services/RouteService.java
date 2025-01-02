@@ -1,9 +1,13 @@
 package com.example.routeoptilib.services;
 
 import com.example.routeoptilib.models.Block;
+import com.example.routeoptilib.models.EventDataDTO;
+import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
+import com.example.routeoptilib.utils.Constant;
 import com.moveinsync.ets.models.Duty;
 import com.moveinsync.ets.models.EmptyLeg;
 import com.moveinsync.tripsheet.models.TripsheetDTOV2;
+import com.moveinsync.vehiclemanagementservice.models.DriverMapping;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,9 +22,10 @@ public class RouteService {
     @Autowired
     private ExternalApiService externalApiService;
     
-    public String optimiseRoute(String buid, long startTimestamp, long endTimestamp) {
-        List<Block> cabBlocks = new ArrayList<>();
-        List<Block> driverBlocks = new ArrayList<>();
+    public final List<Block> cabBlocks = new ArrayList<>();
+    public final List<Block> driverBlocks = new ArrayList<>();
+    
+    public List<OptimisedSuggestionDataDTO> provideOptimisedSuggestion(String buid, String routeId, long startTimestamp, long endTimestamp) {
         
         List<VehicleDTO> vehicleDTOList = externalApiService.getVehiclesByBuid(buid);
         List<String> vehicleRegistrations = vehicleDTOList.stream().map(VehicleDTO::getRegistration).toList();
@@ -48,8 +53,12 @@ public class RouteService {
                 driverBlocks.add(emptyLegDriverBlock);
             }
         }
-        
-        return "Optimised Route";
+        return optimiseRoute();
+    }
+    
+    private List<OptimisedSuggestionDataDTO> optimiseRoute() {
+        // Optimise the route based on the blocks
+        return new ArrayList<>();
     }
     
     private long getStartTimestampOfDay() {
@@ -69,5 +78,24 @@ public class RouteService {
         calendar.set(Calendar.MINUTE, 59);
         calendar.set(Calendar.SECOND, 59);
         return calendar.getTimeInMillis();
+    }
+    
+    public List<DriverMapping> getAllDrivers(String buid) {
+        return externalApiService.getDriverData(List.of(buid));
+    }
+    
+    public List<VehicleDTO> getAllCabs(String buid) {
+        return externalApiService.getVehiclesByBuid(buid);
+    }
+    
+    public void createEvents(String buid, List<EventDataDTO> events) {
+        for (EventDataDTO event : events) {
+            Block block = new Block(event.getId(), event.getStartTime(), event.getEndTime());
+            if (event.getType().equals(Constant.CAB)) {
+                cabBlocks.add(block);
+            } else if (event.getType().equals(Constant.DRIVER)) {
+                driverBlocks.add(block);
+            }
+        }
     }
 }

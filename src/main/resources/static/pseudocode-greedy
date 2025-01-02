@@ -1,0 +1,76 @@
+# Define vehicles, drivers, and trips
+vehicles = ["V1", "V2"]
+drivers = ["D1", "D2"]
+trips = [
+    {"id": "T1", "start": 1, "end": 3},
+    {"id": "T2", "start": 3, "end": 5}
+]
+
+# Vehicle and driver break schedules
+vehicle_breaks = {
+    "V1": [(5, 9)],
+    "V2": [(1, 3)]
+}
+
+driver_breaks = {
+    "D1": [(5, 9)],
+    "D2": [(1, 3)]
+}
+
+# Function to check if a trip can be assigned
+def is_available(entity_breaks, trip):
+    for start, end in entity_breaks:
+        if not (trip["end"] <= start or trip["start"] >= end):
+            return False
+    return True
+
+# Function to assign trips while including all possibilities
+def assign_trips_with_possibilities(trips, vehicles, drivers, vehicle_breaks, driver_breaks):
+    # Sort trips by start time
+    trips.sort(key=lambda t: t["start"])
+
+    # Keep track of all combinations for each trip
+    all_combinations = {}
+
+    # Track vehicle and driver usage dynamically
+    used_vehicle_schedule = {v: [] for v in vehicles}
+    used_driver_schedule = {d: [] for d in drivers}
+
+    for trip in trips:
+        trip_id = trip["id"]
+        combinations = []
+
+        # Find all possible vehicle-driver pairs
+        for vehicle in vehicles:
+            for driver in drivers:
+                if (is_available(vehicle_breaks[vehicle], trip) and
+                    is_available(driver_breaks[driver], trip) and
+                    is_available(used_vehicle_schedule[vehicle], trip) and
+                    is_available(used_driver_schedule[driver], trip)):
+
+                    # Add this pair to the list of possibilities
+                    combinations.append({"vehicle": vehicle, "driver": driver})
+
+        # Add combinations to the result
+        all_combinations[trip_id] = combinations
+
+        # Greedily mark the first feasible combination as assigned
+        if combinations:
+            selected = combinations[0]
+            used_vehicle_schedule[selected["vehicle"]].append((trip["start"], trip["end"]))
+            used_driver_schedule[selected["driver"]].append((trip["start"], trip["end"]))
+
+    return all_combinations
+
+# Assign trips with multiple possibilities
+result = assign_trips_with_possibilities(trips, vehicles, drivers, vehicle_breaks, driver_breaks)
+
+# Output results
+print("Suggested Combinations for Each Trip:")
+for trip_id, combinations in result.items():
+    print(f"Trip {trip_id}:")
+    if combinations:
+        for combo in combinations:
+            print(f"  Vehicle: {combo['vehicle']}, Driver: {combo['driver']}")
+    else:
+        print("  No feasible combinations available.")

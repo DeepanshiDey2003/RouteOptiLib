@@ -1,6 +1,8 @@
 package com.example.routeoptilib.services;
 
 import com.example.routeoptilib.utils.Constant;
+import com.moveinsync.MisBuidUtils;
+import com.moveinsync.ets.models.Duty;
 import com.moveinsync.tripsheet.models.TripsheetDTOV2;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,8 +11,10 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -27,6 +31,9 @@ public class ExternalApiService {
     
     @Value("${tripsheet.service.api.url}")
     private String tripsheetServiceApiUrl;
+    
+    @Value("${x.mis.token.ets}")
+    private String xMisTokenEts;
     
     public List<VehicleDTO> getVehiclesByBuid(String buid) {
         String url = String.format("%s/%s/vehicles", vmsApiUrl, buid);
@@ -65,6 +72,33 @@ public class ExternalApiService {
             return response.getBody() != null ? response.getBody() : List.of();
         } catch (Exception e) {
             return List.of();
+        }
+    }
+    
+    public Duty getDutyForTrip(String buid, String guid) {
+        String url = String.format("%s%s/%s", MisBuidUtils.getUrlOfBuid(buid), "ets/apis/getTripDuty", guid);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set(Constant.X_MIS_TOKEN, xMisTokenEts);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        
+        try {
+            ResponseEntity<Duty> response = restTemplate.exchange(
+                    builder.toUriString(),
+                    HttpMethod.GET,
+                    entity,
+                    Duty.class
+            );
+            
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return response.getBody();
+            } else {
+                return null;
+            }
+        } catch (RestClientException e) {
+            return null;
         }
     }
 }

@@ -1,0 +1,53 @@
+# python disrespect
+from itertools import product
+
+# Define vehicles, drivers, and trips
+vehicles = ["V1", "V2"]
+drivers = ["D1", "D2"]
+trips = [
+    {"id": "T1", "start": 1, "end": 3},
+    {"id": "T2", "start": 3, "end": 5}
+]
+
+# Vehicle and driver break schedules
+vehicle_breaks = {
+    "V1": [(5, 9)],
+    "V2": [(1, 3)]
+}
+
+driver_breaks = {
+    "D1": [(5, 9)],
+    "D2": [(1, 3)]
+}
+
+# Function to check if a trip can be assigned
+def is_available(entity_breaks, trip):
+    for start, end in entity_breaks:
+        if not (trip["end"] <= start or trip["start"] >= end):
+            return False
+    return True
+
+# Generate all valid combinations for each trip
+all_combinations = {}
+
+for trip in trips:
+    trip_id = trip["id"]
+    combinations = []
+
+    # Check all vehicle-driver pairs for feasibility
+    for vehicle, driver in product(vehicles, drivers):
+        if is_available(vehicle_breaks[vehicle], trip) and is_available(driver_breaks[driver], trip):
+            combinations.append({"vehicle": vehicle, "driver": driver})
+
+    # Store combinations for the trip
+    all_combinations[trip_id] = combinations
+
+# Output results
+print("Suggested Combinations for Each Trip:")
+for trip_id, combinations in all_combinations.items():
+    print(f"Trip {trip_id}:")
+    if combinations:
+        for combo in combinations:
+            print(f"  Vehicle: {combo['vehicle']}, Driver: {combo['driver']}")
+    else:
+        print("  No feasible combinations available.")

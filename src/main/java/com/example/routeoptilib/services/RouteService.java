@@ -3,6 +3,7 @@ package com.example.routeoptilib.services;
 import com.example.routeoptilib.models.Block;
 import com.example.routeoptilib.models.EventDataDTO;
 import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
+import com.example.routeoptilib.repositories.BlockRepository;
 import com.example.routeoptilib.utils.Constant;
 import com.moveinsync.ets.models.Duty;
 import com.moveinsync.ets.models.EmptyLeg;
@@ -22,10 +23,13 @@ public class RouteService {
     @Autowired
     private ExternalApiService externalApiService;
     
-    public final List<Block> cabBlocks = new ArrayList<>();
-    public final List<Block> driverBlocks = new ArrayList<>();
+    @Autowired
+    private BlockRepository blockRepository;
     
     public List<OptimisedSuggestionDataDTO> provideOptimisedSuggestion(String buid, String routeId, long startTimestamp, long endTimestamp) {
+        
+        List<Block> cabBlocks = new ArrayList<>();
+        List<Block> driverBlocks = new ArrayList<>();
         
         List<VehicleDTO> vehicleDTOList = externalApiService.getVehiclesByBuid(buid);
         List<String> vehicleRegistrations = vehicleDTOList.stream().map(VehicleDTO::getRegistration).toList();
@@ -37,8 +41,8 @@ public class RouteService {
         
         // Create blocks for each cab and driver when both are occupied (tripsheet exists)
         for (TripsheetDTOV2 tripsheetDTOV2 : vehicleTripDetailsOfAllVehiclesForDay) {
-            Block cabBlock = new Block(tripsheetDTOV2.getCab().getRegistration(), tripsheetDTOV2.getStartTime().getTime(), tripsheetDTOV2.getEndTime().getTime());
-            Block driverBlock = new Block(tripsheetDTOV2.getCab().getDriver().getGuid(), tripsheetDTOV2.getStartTime().getTime(), tripsheetDTOV2.getEndTime().getTime());
+            Block cabBlock = new Block(tripsheetDTOV2.getCab().getRegistration(), Constant.CAB, tripsheetDTOV2.getStartTime().getTime(), tripsheetDTOV2.getEndTime().getTime());
+            Block driverBlock = new Block(tripsheetDTOV2.getCab().getDriver().getGuid(), Constant.DRIVER, tripsheetDTOV2.getStartTime().getTime(), tripsheetDTOV2.getEndTime().getTime());
             cabBlocks.add(cabBlock);
             driverBlocks.add(driverBlock);
         }
@@ -47,18 +51,25 @@ public class RouteService {
         for (TripsheetDTOV2 tripsheetDTOV2 : vehicleTripDetailsOfAllVehiclesForDay) {
             Duty duty = externalApiService.getDutyForTrip(buid, tripsheetDTOV2.getGuid());
             for (EmptyLeg emptyLeg : duty.getEmptyLegs()) {
-                Block emptyLegCabBlock = new Block(tripsheetDTOV2.getCab().getRegistration(), emptyLeg.getStartTime(), emptyLeg.getEndTime());
-                Block emptyLegDriverBlock = new Block(tripsheetDTOV2.getCab().getDriver().getGuid(), emptyLeg.getStartTime(), emptyLeg.getEndTime());
+                Block emptyLegCabBlock = new Block(tripsheetDTOV2.getCab().getRegistration(), Constant.CAB, emptyLeg.getStartTime(), emptyLeg.getEndTime());
+                Block emptyLegDriverBlock = new Block(tripsheetDTOV2.getCab().getDriver().getGuid(), Constant.DRIVER, emptyLeg.getStartTime(), emptyLeg.getEndTime());
                 cabBlocks.add(emptyLegCabBlock);
                 driverBlocks.add(emptyLegDriverBlock);
             }
         }
-        return optimiseRoute();
+        
+        blockRepository.saveAll(cabBlocks);
+        blockRepository.saveAll(driverBlocks);
+        
+        return optimiseRoute(routeId, startTimestamp, endTimestamp);
     }
     
-    private List<OptimisedSuggestionDataDTO> optimiseRoute() {
-        // Optimise the route based on the blocks
-        return new ArrayList<>();
+    private List<OptimisedSuggestionDataDTO> optimiseRoute(String routeId, long startTimestamp, long endTimestamp) {
+        // To do: Optimise the route based on the blocks
+        //Python Logic
+        
+        List<OptimisedSuggestionDataDTO> optimisedSuggestionDataDTOList = new ArrayList<>();
+        return optimisedSuggestionDataDTOList;
     }
     
     private long getStartTimestampOfDay() {
@@ -89,13 +100,21 @@ public class RouteService {
     }
     
     public void createEvents(String buid, List<EventDataDTO> events) {
+        
+        List<Block> cabBlocks = new ArrayList<>();
+        List<Block> driverBlocks = new ArrayList<>();
+        
         for (EventDataDTO event : events) {
             Block block = new Block(event.getId(), event.getStartTime(), event.getEndTime());
             if (event.getType().equals(Constant.CAB)) {
+                block.setType(Constant.CAB);
                 cabBlocks.add(block);
             } else if (event.getType().equals(Constant.DRIVER)) {
+                block.setType(Constant.DRIVER);
                 driverBlocks.add(block);
             }
         }
+        blockRepository.saveAll(cabBlocks);
+        blockRepository.saveAll(driverBlocks);
     }
 }

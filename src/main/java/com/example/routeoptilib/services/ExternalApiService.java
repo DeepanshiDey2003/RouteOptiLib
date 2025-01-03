@@ -2,7 +2,10 @@ package com.example.routeoptilib.services;
 
 import com.example.routeoptilib.models.Cabby;
 import com.example.routeoptilib.utils.Constant;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moveinsync.MisBuidUtils;
+import com.moveinsync.bus.models.dto.ShuttleAvailabilityDTO;
 import com.moveinsync.ets.models.Duty;
 import com.moveinsync.tripsheet.models.TripsheetDTOV2;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
@@ -75,6 +78,33 @@ public class ExternalApiService {
         }
     }
 
+    public ShuttleAvailabilityDTO getShuttleRoutes(String buid) {
+        String url = String.format("%s%s", MisBuidUtils.getUrlOfBuid(buid), "ets/shuttle-service/routes");
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set(Constant.X_MIS_TOKEN, xMisTokenEts);
+        
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    String.class
+            );
+            
+            if (response.getStatusCode().is2xxSuccessful()) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                return objectMapper.readValue(response.getBody(), ShuttleAvailabilityDTO.class);
+            } else {
+                return null;
+            }
+        } catch (RestClientException | JsonProcessingException e) {
+            return null;
+        }
+    }
     
     public List<TripsheetDTOV2> getVehicleTripsForTheDay(String vehicleRegistration, long startTimestampOfDay, long endTimestampOfDay) {
         String url = UriComponentsBuilder.fromHttpUrl(tripsheetServiceApiUrl)

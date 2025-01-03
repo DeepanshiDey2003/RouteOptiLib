@@ -1,6 +1,6 @@
-package com.example.routeoptilib.repositories;
+package com.example.routeoptilib.persistence.repository;
 
-import com.example.routeoptilib.models.Block;
+import com.example.routeoptilib.persistence.entity.Block;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

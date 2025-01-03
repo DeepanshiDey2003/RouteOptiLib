@@ -1,9 +1,9 @@
 package com.example.routeoptilib.services;
 
-import com.example.routeoptilib.models.Block;
+import com.example.routeoptilib.persistence.entity.Block;
 import com.example.routeoptilib.models.EventDataDTO;
 import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
-import com.example.routeoptilib.repositories.BlockRepository;
+import com.example.routeoptilib.persistence.repository.BlockRepository;
 import com.example.routeoptilib.utils.Constant;
 import com.moveinsync.ets.models.Duty;
 import com.moveinsync.ets.models.EmptyLeg;
@@ -58,6 +58,8 @@ public class RouteService {
             }
         }
         
+        cabBlocks.forEach(block -> block.setBuid(buid));
+        driverBlocks.forEach(block -> block.setBuid(buid));
         blockRepository.saveAll(cabBlocks);
         blockRepository.saveAll(driverBlocks);
         
@@ -114,6 +116,9 @@ public class RouteService {
                 driverBlocks.add(block);
             }
         }
+        
+        cabBlocks.forEach(block -> block.setBuid(buid));
+        driverBlocks.forEach(block -> block.setBuid(buid));
         blockRepository.saveAll(cabBlocks);
         blockRepository.saveAll(driverBlocks);
     }

@@ -1,4 +1,4 @@
-package com.example.routeoptilib.models;
+package com.example.routeoptilib.persistence.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Entity;
@@ -24,6 +24,7 @@ public class Block {
     private String type;
     private long startTime;
     private long endTime;
+    private String buid;
     
     public Block(String blockId, String type, long time, long time1) {
         this.blockId = blockId;

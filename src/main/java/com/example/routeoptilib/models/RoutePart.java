@@ -9,7 +9,7 @@ import java.time.LocalTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Route {
+public class RoutePart {
   String id;
   String startPoint;
   String endPoint;

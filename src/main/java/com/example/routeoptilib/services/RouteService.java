@@ -1,6 +1,7 @@
 package com.example.routeoptilib.services;
 
 import com.example.routeoptilib.models.Block;
+import com.example.routeoptilib.models.Cabby;
 import com.example.routeoptilib.models.EventDataDTO;
 import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
 import com.example.routeoptilib.repositories.BlockRepository;
@@ -8,7 +9,6 @@ import com.example.routeoptilib.utils.Constant;
 import com.moveinsync.ets.models.Duty;
 import com.moveinsync.ets.models.EmptyLeg;
 import com.moveinsync.tripsheet.models.TripsheetDTOV2;
-import com.moveinsync.vehiclemanagementservice.models.DriverMapping;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -91,8 +91,8 @@ public class RouteService {
         return calendar.getTimeInMillis();
     }
     
-    public List<DriverMapping> getAllDrivers(String buid) {
-        return externalApiService.getDriverData(List.of(buid));
+    public List<Cabby> getAllDrivers(String buid) {
+        return externalApiService.getDriverData(buid);
     }
     
     public List<VehicleDTO> getAllCabs(String buid) {

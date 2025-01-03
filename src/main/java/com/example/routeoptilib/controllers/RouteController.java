@@ -1,9 +1,9 @@
 package com.example.routeoptilib.controllers;
 
+import com.example.routeoptilib.models.Cabby;
 import com.example.routeoptilib.models.EventDataDTO;
 import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
 import com.example.routeoptilib.services.RouteService;
-import com.moveinsync.vehiclemanagementservice.models.DriverMapping;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +29,7 @@ public class RouteController {
     }
     
     @GetMapping("/drivers")
-    public List<DriverMapping> getAllDrivers(@PathVariable("buid") String buid) {
+    public List<Cabby> getAllDrivers(@PathVariable("buid") String buid) {
         return routeService.getAllDrivers(buid);
     }
     

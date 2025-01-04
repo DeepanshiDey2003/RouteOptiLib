@@ -77,13 +77,18 @@
         <dependency>
             <groupId>com.moveinsync.bus</groupId>
             <artifactId>bus-models</artifactId>
-            <version>2.10.31</version>
+            <version>2.10.25</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.36</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.moveinsync.ets</groupId>
+            <artifactId>ServerSharedUtils</artifactId>
+            <version>1.6.24</version>
         </dependency>
         <dependency>
             <groupId>jakarta.annotation</groupId>

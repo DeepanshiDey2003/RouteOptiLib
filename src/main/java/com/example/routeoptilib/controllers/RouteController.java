@@ -5,6 +5,7 @@ import com.example.routeoptilib.models.EventDataDTO;
 import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
 import com.example.routeoptilib.models.RouteDetailDTO;
 import com.example.routeoptilib.services.RouteService;
+import com.mis.serverdata.utils.GsonUtils;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,8 +45,9 @@ public class RouteController {
         return routeService.provideOptimisedSuggestion(buid, routeId, startTimestamp, endTimestamp);
     }
     
-    @GetMapping
-    public List<RouteDetailDTO> getShuttleRoutes(@PathVariable("buid") String buid) {
-        return routeService.getShuttleRoutes(buid);
+    @GetMapping("/details")
+    public String getShuttleRoutes(@PathVariable("buid") String buid) {
+        List<RouteDetailDTO> r = routeService.getShuttleRoutes(buid);
+        return GsonUtils.getGson().toJson(r);
     }
 }

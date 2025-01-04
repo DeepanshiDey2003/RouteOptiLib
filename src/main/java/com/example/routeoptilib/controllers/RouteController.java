@@ -3,6 +3,7 @@ package com.example.routeoptilib.controllers;
 import com.example.routeoptilib.models.Cabby;
 import com.example.routeoptilib.models.EventDataDTO;
 import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
+import com.example.routeoptilib.models.RouteDetailDTO;
 import com.example.routeoptilib.services.RouteService;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,5 +42,10 @@ public class RouteController {
     @GetMapping("/optimise")
     public List<OptimisedSuggestionDataDTO> optimiseRoute(@PathVariable("buid") String buid, @RequestParam("routeId") String routeId, @RequestParam("startTime") long startTimestamp, @RequestParam("endTime") long endTimestamp) {
         return routeService.provideOptimisedSuggestion(buid, routeId, startTimestamp, endTimestamp);
+    }
+    
+    @GetMapping
+    public List<RouteDetailDTO> getShuttleRoutes(@PathVariable("buid") String buid) {
+        return routeService.getShuttleRoutes(buid);
     }
 }

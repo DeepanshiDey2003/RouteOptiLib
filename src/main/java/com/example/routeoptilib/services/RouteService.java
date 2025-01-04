@@ -130,7 +130,7 @@ public class RouteService {
     public List<RouteDetailDTO> getShuttleRoutes(String buid) {
         ShuttleAvailabilityDTO shuttleAvailabilityDTO = externalApiService.getShuttleRoutes(buid);
         if (Objects.isNull(shuttleAvailabilityDTO)) {
-            throw new RuntimeException("Shuttle routes not available for buid: " + buid);
+            return new ArrayList<>();
         }
         return ConversionUtil.convertToResponseDTO(shuttleAvailabilityDTO);
     }

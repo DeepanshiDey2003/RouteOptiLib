@@ -38,4 +38,52 @@ public class Block {
         this.startTime = startTime;
         this.endTime = endTime;
     }
+    
+    public String getBuid() {
+        return buid;
+    }
+    
+    public void setBuid(String buid) {
+        this.buid = buid;
+    }
+    
+    public Integer getId() {
+        return id;
+    }
+    
+    public void setId(Integer id) {
+        this.id = id;
+    }
+    
+    public String getBlockId() {
+        return blockId;
+    }
+    
+    public void setBlockId(String blockId) {
+        this.blockId = blockId;
+    }
+    
+    public String getType() {
+        return type;
+    }
+    
+    public void setType(String type) {
+        this.type = type;
+    }
+    
+    public long getStartTime() {
+        return startTime;
+    }
+    
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+    
+    public long getEndTime() {
+        return endTime;
+    }
+    
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
+    }
 }

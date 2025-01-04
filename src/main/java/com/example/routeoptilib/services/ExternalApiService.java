@@ -2,8 +2,8 @@ package com.example.routeoptilib.services;
 
 import com.example.routeoptilib.models.Cabby;
 import com.example.routeoptilib.utils.Constant;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonSyntaxException;
+import com.mis.serverdata.utils.GsonUtils;
 import com.moveinsync.MisBuidUtils;
 import com.moveinsync.bus.models.dto.ShuttleAvailabilityDTO;
 import com.moveinsync.ets.models.Duty;
@@ -96,12 +96,11 @@ public class ExternalApiService {
             );
             
             if (response.getStatusCode().is2xxSuccessful()) {
-                ObjectMapper objectMapper = new ObjectMapper();
-                return objectMapper.readValue(response.getBody(), ShuttleAvailabilityDTO.class);
+                return GsonUtils.getGson().fromJson(response.getBody(), ShuttleAvailabilityDTO.class);
             } else {
                 return null;
             }
-        } catch (RestClientException | JsonProcessingException e) {
+        } catch (RestClientException | JsonSyntaxException e) {
             return null;
         }
     }

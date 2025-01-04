@@ -10,6 +10,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -86,4 +90,9 @@ public class Block {
     public void setEndTime(long endTime) {
         this.endTime = endTime;
     }
+  
+  public boolean overlapsWith(LocalTime durationStart, LocalTime durationEnd) {
+        var blockStartTime = LocalTime.of((int) (this.startTime / 60), (int) (this.startTime % 60));
+        return blockStartTime.isAfter(durationStart) && blockStartTime.isBefore(durationEnd);
+  }
 }

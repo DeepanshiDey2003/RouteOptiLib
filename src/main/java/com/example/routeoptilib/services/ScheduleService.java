@@ -2,6 +2,7 @@ package com.example.routeoptilib.services;
 
 import com.example.routeoptilib.models.Cab;
 import com.example.routeoptilib.models.RoutePart;
+import com.example.routeoptilib.persistence.entity.Block;
 import com.mis.data.location.STW_Location;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +69,12 @@ public class ScheduleService {
    * @return True if the cab can be assigned the routePart, false otherwise
    */
   private boolean canAssignRoute(Cab cab, RoutePart routePart, List<RoutePart> assignedRouteParts) {
+    for (Block block : cab.getBlocks()) {
+      if (block.overlapsWith(routePart.getStartTime(), routePart.getEndTime())) {
+        return false;
+      }
+    }
+    
     // Calculate total duty time for the day
     int totalDutyMinutes = assignedRouteParts.stream()
             .mapToInt(r -> Math.toIntExact(Duration.between(r.getStartTime(), r.getEndTime()).toMinutes()))

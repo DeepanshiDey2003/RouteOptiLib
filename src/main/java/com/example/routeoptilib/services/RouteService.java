@@ -1,11 +1,14 @@
 package com.example.routeoptilib.services;
 
 import com.example.routeoptilib.models.Cabby;
+import com.example.routeoptilib.models.RouteDetailDTO;
 import com.example.routeoptilib.persistence.entity.Block;
 import com.example.routeoptilib.models.EventDataDTO;
 import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
 import com.example.routeoptilib.persistence.repository.BlockRepository;
 import com.example.routeoptilib.utils.Constant;
+import com.example.routeoptilib.utils.ConversionUtil;
+import com.moveinsync.bus.models.dto.ShuttleAvailabilityDTO;
 import com.moveinsync.ets.models.Duty;
 import com.moveinsync.ets.models.EmptyLeg;
 import com.moveinsync.tripsheet.models.TripsheetDTOV2;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class RouteService {
@@ -121,5 +125,13 @@ public class RouteService {
         driverBlocks.forEach(block -> block.setBuid(buid));
         blockRepository.saveAll(cabBlocks);
         blockRepository.saveAll(driverBlocks);
+    }
+    
+    public List<RouteDetailDTO> getShuttleRoutes(String buid) {
+        ShuttleAvailabilityDTO shuttleAvailabilityDTO = externalApiService.getShuttleRoutes(buid);
+        if (Objects.isNull(shuttleAvailabilityDTO)) {
+            throw new RuntimeException("Shuttle routes not available for buid: " + buid);
+        }
+        return ConversionUtil.convertToResponseDTO(shuttleAvailabilityDTO);
     }
 }

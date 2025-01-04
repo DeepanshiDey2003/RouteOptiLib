@@ -77,7 +77,7 @@
         <dependency>
             <groupId>com.moveinsync.bus</groupId>
             <artifactId>bus-models</artifactId>
-            <version>2.10.22</version>
+            <version>2.10.31</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

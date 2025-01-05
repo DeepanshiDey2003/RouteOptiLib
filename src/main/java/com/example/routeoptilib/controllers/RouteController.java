@@ -1,13 +1,13 @@
 package com.example.routeoptilib.controllers;
 
-import com.example.routeoptilib.models.Cabby;
-import com.example.routeoptilib.models.EventDataDTO;
+import com.example.routeoptilib.models.CabDTO;
+import com.example.routeoptilib.models.BlockDataDTO;
+import com.example.routeoptilib.models.DriverDTO;
 import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
 import com.example.routeoptilib.models.RouteDetailDTO;
 import com.example.routeoptilib.services.RouteService;
-import com.mis.serverdata.utils.GsonUtils;
-import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,34 +20,42 @@ import java.util.List;
 
 @RestController
 @RequestMapping( "/route/{buid}")
+@CrossOrigin
 public class RouteController {
     
     @Autowired
     private RouteService routeService;
     
     @GetMapping("/cabs")
-    public List<VehicleDTO> getAllCabs(@PathVariable("buid") String buid) {
+    public List<CabDTO> getAllCabs(@PathVariable("buid") String buid) {
         return routeService.getAllCabs(buid);
     }
     
     @GetMapping("/drivers")
-    public List<Cabby> getAllDrivers(@PathVariable("buid") String buid) {
+    public List<DriverDTO> getAllDrivers(@PathVariable("buid") String buid) {
         return routeService.getAllDrivers(buid);
     }
     
-    @PostMapping("/events")
-    public void createEvents(@PathVariable("buid") String buid, @RequestBody List<EventDataDTO> events) {
-        routeService.createEvents(buid, events);
+    @PostMapping("/blocks")
+    public void createBlocks(@PathVariable("buid") String buid, @RequestBody List<BlockDataDTO> events) {
+        routeService.createBlocks(buid, events);
     }
     
-    @GetMapping("/optimise")
-    public List<OptimisedSuggestionDataDTO> optimiseRoute(@PathVariable("buid") String buid, @RequestParam("routeId") String routeId, @RequestParam("startTime") long startTimestamp, @RequestParam("endTime") long endTimestamp) {
-        return routeService.provideOptimisedSuggestion(buid, routeId, startTimestamp, endTimestamp);
+    @GetMapping("/suggest")
+    public List<OptimisedSuggestionDataDTO> suggestRoute(@PathVariable("buid") String buid) {
+        return routeService.suggestCabDriverForRoutes(buid);
     }
     
     @GetMapping("/details")
-    public String getShuttleRoutes(@PathVariable("buid") String buid) {
-        List<RouteDetailDTO> r = routeService.getShuttleRoutes(buid);
-        return GsonUtils.getGson().toJson(r);
+    public List<RouteDetailDTO> getShuttleRoutes(@PathVariable("buid") String buid) {
+        return routeService.getShuttleRoutes(buid);
+    }
+    
+    @PostMapping("/generate/{routeId}")
+    public boolean generateRoute(@PathVariable("buid") String buid,
+                                 @PathVariable("routeId") String routeId,
+                                 @RequestParam(value = "driverLicense") String driverLicense,
+                                 @RequestParam(value = "cabIdentification") String cabId) {
+        return routeService.createMapping(buid, routeId, driverLicense, cabId);
     }
 }

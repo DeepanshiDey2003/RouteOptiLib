@@ -10,9 +10,13 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Cab {
+public class CabDTO {
   private int id;
   private String registration;
-  private String cabId;
   private List<Block> blocks;
+  
+  public CabDTO(int id, String registration) {
+    this.id = id;
+    this.registration = registration;
+  }
 }

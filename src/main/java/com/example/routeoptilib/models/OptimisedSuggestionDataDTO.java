@@ -11,6 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class OptimisedSuggestionDataDTO {
     private String routeId;
-    private String vehicle;
-    private String driver;
+    private String vehicleIdentification;
+    private String driverId;
+    private String driverName;
 }

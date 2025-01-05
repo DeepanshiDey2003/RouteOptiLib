@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventDataDTO {
+public class BlockDataDTO {
     private String id;
     private String type;
     private long startTime;

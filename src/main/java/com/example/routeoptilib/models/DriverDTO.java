@@ -6,8 +6,8 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class Driver {
-  String id;
+public class DriverDTO {
+  Long id;
   String license;
   String name;
   List<Block> blocks;

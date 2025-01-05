@@ -1,0 +1,19 @@
+.property-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    max-width: 1200px;
+}
+
+.property-row * {
+    flex: 1
+}
+
+.property-row input {
+    padding: 8px;
+    font-size: 16px;
+}
+
+.property-row label {
+    text-align: right;
+}

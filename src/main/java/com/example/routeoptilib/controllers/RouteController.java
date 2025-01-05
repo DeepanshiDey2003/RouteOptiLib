@@ -11,6 +11,7 @@ import com.example.routeoptilib.persistence.repository.CabRepository;
 import com.example.routeoptilib.persistence.repository.DriverRepository;
 import com.example.routeoptilib.persistence.repository.RouteRepository;
 import com.example.routeoptilib.services.RouteService;
+import com.example.routeoptilib.services.ScheduleService;
 import com.example.routeoptilib.utils.LoadedBuidsChecker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping( "/route/{buid}")
@@ -75,5 +78,24 @@ public class RouteController {
     @PostMapping("/generate/multi")
     public boolean generateRoutes(@PathVariable("buid") String buid, @RequestBody List<CabDriverRouteMapping> mappings) {
       return routeService.createMapping(buid, mappings);
+    }
+    
+    @GetMapping("/properties")
+  public Map<String, Integer> getProperties(@PathVariable("buid") String buid) {
+      Map<String, Integer> properties = new HashMap<>();
+      for (ScheduleService.GlobalProperties global : ScheduleService.GlobalProperties.values()) {
+        properties.put(global.name(), global.getNumValue());
+      }
+      return properties;
+    }
+    
+    @PostMapping("/properties")
+    public void updateProperties(@PathVariable("buid") String buid, @RequestBody Map<String, Integer> properties) {
+      for (ScheduleService.GlobalProperties global : ScheduleService.GlobalProperties.values()) {
+        var value = properties.get(global.name());
+        if (value != null) {
+          global.setValue(value);
+        }
+      }
     }
 }

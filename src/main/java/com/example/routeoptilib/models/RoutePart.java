@@ -16,6 +16,7 @@ public class RoutePart {
   LocalTime startTime;
   LocalTime endTime;
   double distance;
+  boolean alreadyAssigned;
   
   public LocalTime getStartTime() {
     return startTime;

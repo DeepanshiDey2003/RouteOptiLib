@@ -1,8 +1,11 @@
 package com.example.routeoptilib.services;
 
 import com.example.routeoptilib.models.CabDTO;
+import com.example.routeoptilib.models.CabDriverUnit;
 import com.example.routeoptilib.models.DriverDTO;
 import com.example.routeoptilib.models.RouteDetailDTO;
+import com.example.routeoptilib.models.RoutePart;
+import com.example.routeoptilib.models.StopDetailDTO;
 import com.example.routeoptilib.persistence.entity.Block;
 import com.example.routeoptilib.models.BlockDataDTO;
 import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
@@ -25,11 +28,14 @@ import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,6 +51,7 @@ public class RouteService {
     private final DriverRepository driverRepository;
     private final RouteRepository routeRepository;
     private final CabRepository cabRepository;
+    private final ScheduleService scheduleService;
     
     /**
      * @deprecated
@@ -91,10 +98,37 @@ public class RouteService {
     }
     
     public List<OptimisedSuggestionDataDTO> suggestCabDriverForRoutes(String buid) {
-        // To do: Optimise the route based on the blocks
-        //Python Logic
-        
-        List<OptimisedSuggestionDataDTO> optimisedSuggestionDataDTOList = new ArrayList<>();
+        var cabs = getAllCabs(buid);
+        var drivers = getAllDrivers(buid);
+        var routes = getShuttleRoutes(buid);
+        List<RoutePart> routeParts = routes.stream()
+                .map(r -> {
+                    RoutePart routePart = new RoutePart();
+                    routePart.setAlreadyAssigned(StringUtils.isNotBlank(r.getAssignedCabIdentification()));
+                    routePart.setId(r.getRouteId());
+                    var firstStop = r.getStops().getFirst();
+                    var lastStop = r.getStops().getLast();
+                    routePart.setDistance(scheduleService.calculateDistance(firstStop.getGeoCord(), lastStop.getGeoCord()));
+                    routePart.setStartPoint(firstStop.getGeoCord());
+                    routePart.setEndPoint(lastStop.getGeoCord());
+                    routePart.setStartTime(LocalTime.of((int) ((firstStop.getPlannedArrivalTime() / 60) % 12), (int) (firstStop.getPlannedArrivalTime() % 60)));
+                    routePart.setEndTime(LocalTime.of((int) ((lastStop.getPlannedArrivalTime() / 60) % 12), (int) (lastStop.getPlannedArrivalTime() % 60)));
+                    return routePart;
+                })
+                .collect(Collectors.toList());
+        Map<CabDriverUnit, List<RoutePart>> map = scheduleService.scheduleCabs(cabs, drivers, routeParts);
+        List<OptimisedSuggestionDataDTO> optimisedSuggestionDataDTOList = Lists.newArrayList();
+        for (Map.Entry<CabDriverUnit, List<RoutePart>> entry : map.entrySet()) {
+            var cabDriver = entry.getKey();
+            entry.getValue().forEach(routePart -> {
+                var dto = new OptimisedSuggestionDataDTO();
+                dto.setRouteId(routePart.getId());
+                dto.setDriverId(cabDriver.getDriverId());
+                dto.setDriverName(cabDriver.getDriverName());
+                dto.setVehicleIdentification(cabDriver.getCabId());
+                optimisedSuggestionDataDTOList.add(dto);
+            });
+        }
         return optimisedSuggestionDataDTOList;
     }
     
@@ -139,9 +173,10 @@ public class RouteService {
         for (DriverDTO driverDTO : driverDTODTOS) {
             var block = blockMap.get(driverDTO.getLicense());
             if (CollectionUtils.isEmpty(block)) {
+                driverDTO.setBlocks(Lists.newArrayList());
                 continue;
             }
-            driverDTO.setBlocks(block);
+            driverDTO.setBlocks(block.size() > 0 ? block : Lists.newArrayList());
         }
         return driverDTODTOS;
     }
@@ -167,9 +202,10 @@ public class RouteService {
         for (CabDTO cabDTO : cabDTOList) {
             var block = blockMap.get(cabDTO.getRegistration());
             if (CollectionUtils.isEmpty(block)) {
+                cabDTO.setBlocks(Lists.newArrayList());
                 continue;
             }
-            cabDTO.setBlocks(block);
+            cabDTO.setBlocks(block.size() > 0 ? block : Lists.newArrayList());
         }
         return cabDTOList;
     }
@@ -222,6 +258,8 @@ public class RouteService {
             routeDetailDTO.setAssignedDriverId(assignment.getDriverLicense());
             routeDetailDTO.setAssignedDriverName(driver.getName());
             routeDetailDTO.setAssignedCabIdentification(assignment.getCabIdentification());
+            
+            routeDetailDTO.getStops().sort(Comparator.comparing(StopDetailDTO::getPlannedArrivalTime));
         }
         return result;
     }

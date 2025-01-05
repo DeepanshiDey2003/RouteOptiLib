@@ -1,18 +1,22 @@
 package com.example.routeoptilib.services;
 
 import com.example.routeoptilib.models.CabDTO;
+import com.example.routeoptilib.models.CabDriverUnit;
+import com.example.routeoptilib.models.DriverDTO;
 import com.example.routeoptilib.models.RoutePart;
 import com.example.routeoptilib.persistence.entity.Block;
 import com.mis.data.location.STW_Location;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -26,8 +30,6 @@ public class ScheduleService {
   private static int MAX_STRETCH_HOURS = 4;
   private static int MAX_DUTY_HOURS_PER_DAY = 12;
   
-  Logger log = LoggerFactory.getLogger(ScheduleService.class);
-  
   /**
    * Schedules the routeParts intelligently for the available cabDTOS.
    *
@@ -35,19 +37,26 @@ public class ScheduleService {
    * @param routeParts List of routeParts to be covered
    * @return A map of cab to its assigned routeParts
    */
-  public Map<CabDTO, List<RoutePart>> scheduleCabs(List<CabDTO> cabDTOS, List<RoutePart> routeParts) {
-    Map<CabDTO, List<RoutePart>> cabAssignments = new HashMap<>();
+  public Map<CabDriverUnit, List<RoutePart>> scheduleCabs(List<CabDTO> cabDTOS, List<DriverDTO> driverDTOS, List<RoutePart> routeParts) {
+    Map<CabDriverUnit, List<RoutePart>> cabAssignments = new HashMap<>();
     
     // Sort routeParts by start time for optimal scheduling
     routeParts.sort(Comparator.comparing(RoutePart::getStartTime));
     
     for (RoutePart routePart : routeParts) {
       CabDTO assignedCabDTO = null;
-      
       for (CabDTO cabDTO : cabDTOS) {
-        if (canAssignRoute(cabDTO, routePart, cabAssignments.getOrDefault(cabDTO, new ArrayList<>()))) {
-          cabAssignments.computeIfAbsent(cabDTO, k -> new ArrayList<>()).add(routePart);
+        if (driverDTOS.isEmpty()) {
+          break;
+        }
+        CabDriverUnit cabDriverUnit = new CabDriverUnit();
+        cabDriverUnit.setCabId(cabDTO.getRegistration());
+        cabDriverUnit.setDriverId(driverDTOS.get(0).getLicense());
+        cabDriverUnit.setDriverName(driverDTOS.get(0).getName());
+        if (canAssignRoute(cabDTO, routePart, cabAssignments.getOrDefault(cabDriverUnit, new ArrayList<>()))) {
+          cabAssignments.computeIfAbsent(cabDriverUnit, k -> new ArrayList<>()).add(routePart);
           assignedCabDTO = cabDTO;
+          driverDTOS.removeFirst();
           break;
         }
       }
@@ -69,6 +78,7 @@ public class ScheduleService {
    * @return True if the cabDTO can be assigned the routePart, false otherwise
    */
   private boolean canAssignRoute(CabDTO cabDTO, RoutePart routePart, List<RoutePart> assignedRouteParts) {
+    
     for (Block block : cabDTO.getBlocks()) {
       if (block.overlapsWith(routePart.getStartTime(), routePart.getEndTime())) {
         return false;
@@ -123,7 +133,7 @@ public class ScheduleService {
    * @param pointB Ending point
    * @return Distance in kilometers
    */
-  private double calculateDistance(String pointA, String pointB) {
+  public double calculateDistance(String pointA, String pointB) {
     // Replace this with actual distance calculation logic
     return new STW_Location(pointA).distance(new STW_Location(pointB)) / 1000D;
   }

@@ -22,7 +22,7 @@ public class Route {
   @Column
   private String name;
   
-  @Column
+  @Column(length = 20000)
   private String stops;
   
   @Column

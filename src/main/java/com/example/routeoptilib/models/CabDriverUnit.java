@@ -15,4 +15,9 @@ public class CabDriverUnit {
   private String driverName;
   private String cabId;
   private List<Block> blocks;
+  
+  @Override
+  public int hashCode() {
+    return (driverId + driverName + cabId).hashCode();
+  }
 }

@@ -92,7 +92,7 @@ public class Block {
     }
   
   public boolean overlapsWith(LocalTime durationStart, LocalTime durationEnd) {
-        var blockStartTime = LocalTime.of((int) (this.startTime / 60), (int) (this.startTime % 60));
-        return blockStartTime.isAfter(durationStart) && blockStartTime.isBefore(durationEnd);
+        var blockStartTime = LocalTime.of((int) (this.startTime / 60) % 24, (int) (this.startTime % 60));
+        return blockStartTime.equals(durationStart) || blockStartTime.equals(durationEnd) || blockStartTime.isAfter(durationStart) && blockStartTime.isBefore(durationEnd);
   }
 }

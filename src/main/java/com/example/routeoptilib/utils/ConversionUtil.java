@@ -13,11 +13,13 @@ import com.moveinsync.bus.models.dto.ShuttleAvailabilityDTO;
 import com.moveinsync.bus.models.dto.ShuttleStopDTO;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ConversionUtil {
@@ -36,7 +38,7 @@ public class ConversionUtil {
                         ShuttleStopDTO stop = availabilityDTO.getShuttleStops().get(stopGuid);
                             return new StopDetailDTO(
                                     stop.getGuid(),
-                                    stop.getRouteName(),
+                                    StringUtils.defaultIfBlank(stop.getRouteName(), UUID.randomUUID().toString().substring(0, 8)),
                                     stop.getGeoCord(),
                                     plannedArrivalTime
                             );
@@ -51,7 +53,7 @@ public class ConversionUtil {
               }
             }
             return new RouteDetailDTO(route.getRouteId(), route.getRouteName(), stopDetails);
-        }).toList();
+        }).collect(Collectors.toList());
     }
     
     public static List<RouteDetailDTO> convertToResponseDTO(List<Route> routes) {
@@ -60,9 +62,9 @@ public class ConversionUtil {
       }
       return routes.stream()
               .map(r -> new RouteDetailDTO(
-                      r.getId(),
+                      r.getRouteId(),
                       r.getName(),
-                      Arrays.stream(GsonUtils.getGson().fromJson(r.getStops(), StopDetailDTO[].class)).toList()))
+                      Arrays.stream(GsonUtils.getGson().fromJson(r.getStops(), StopDetailDTO[].class)).collect(Collectors.toList())))
               .collect(Collectors.toList());
     }
   
@@ -73,7 +75,7 @@ public class ConversionUtil {
       return result.stream()
               .map(r -> {
                 Route route = new Route();
-                route.setId(r.getRouteId());
+                route.setRouteId(r.getRouteId());
                 route.setName(r.getRouteName());
                 route.setStops(GsonUtils.getGson().toJson(r.getStops()));
                 route.setBuid(buid);

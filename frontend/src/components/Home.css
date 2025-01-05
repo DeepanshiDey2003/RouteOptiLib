@@ -46,17 +46,37 @@
     background-color: rgb(233, 233, 233);
 }
 
-.suggestion {
+.assignment {
     display: flex;
     flex-direction: column;
     font-size: 14px;
 }
 
-.route-suggestion-hint {
+.suggestion {
+    /* background-color: rgba(0, 255, 0, 0.1); */
+    /* padding: 8px; */
+    border-radius: 12px;
+    color: rgb(0, 138, 0)
+}
+
+.route-assignment-hint {
     margin-bottom: 4px;
 }
 
-.route-suggestion-driver, .route-suggestion-vehicle {
+.route-assignment-driver, .route-assignment-vehicle {
     font-weight: bold;
     font-size: 16px;
+}
+
+.suggestion-controls {
+    padding: 32px;
+    display: flex;
+    gap: 32px;
+    margin-bottom: 32px;
+    border-top: 2px solid grey;
+    border-bottom: 2px solid grey
+}
+
+.suggestion-controls .spacer {
+    flex: 1;
 }

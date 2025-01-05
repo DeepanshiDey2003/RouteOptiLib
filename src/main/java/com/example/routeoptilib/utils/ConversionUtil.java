@@ -25,7 +25,7 @@ public class ConversionUtil {
                         ShuttleStopDTO stop = availabilityDTO.getShuttleStops().get(stopGuid);
                             return new StopDetailDTO(
                                     stop.getGuid(),
-                                    stop.getLandmark(),
+                                    stop.getRouteName(),
                                     stop.getGeoCord(),
                                     plannedArrivalTime
                             );

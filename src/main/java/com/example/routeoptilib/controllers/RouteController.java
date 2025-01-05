@@ -8,6 +8,7 @@ import com.example.routeoptilib.services.RouteService;
 import com.mis.serverdata.utils.GsonUtils;
 import com.moveinsync.vehiclemanagementservice.models.VehicleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping( "/route/{buid}")
+@CrossOrigin
 public class RouteController {
     
     @Autowired
@@ -46,8 +48,7 @@ public class RouteController {
     }
     
     @GetMapping("/details")
-    public String getShuttleRoutes(@PathVariable("buid") String buid) {
-        List<RouteDetailDTO> r = routeService.getShuttleRoutes(buid);
-        return GsonUtils.getGson().toJson(r);
+    public List<RouteDetailDTO> getShuttleRoutes(@PathVariable("buid") String buid) {
+        return routeService.getShuttleRoutes(buid);
     }
 }

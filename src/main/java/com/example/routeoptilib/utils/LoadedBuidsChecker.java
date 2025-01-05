@@ -11,6 +11,14 @@ import java.util.Set;
 public class LoadedBuidsChecker {
   private static Map<LoadType, Set<String>> loadedBuids = Maps.newHashMap();
   
+  public static void removeAllForBuid(String buid) {
+    for (LoadType loadType : LoadType.values()) {
+      if (loadedBuids.containsKey(loadType)) {
+        loadedBuids.get(loadType).remove(buid);
+      }
+    }
+  }
+  
   public enum LoadType {
     ROUTE, CAB, DRIVER
   }

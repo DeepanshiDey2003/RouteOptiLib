@@ -24,6 +24,25 @@ button:active {
 }
 
 button.primary {
-    background-color: rgb(113, 255, 108);
+    background-color: rgb(154, 238, 151);
     color: black
+}
+button.special {
+    background-color: rgb(255, 218, 11);
+    color: black
+}
+button.danger {
+    background-color: rgb(160, 0, 0);
+}
+
+button.disabled {
+    transition: 0ms;
+    background-color: grey;
+}
+button.disabled:hover {
+    filter: none;
+    cursor: not-allowed
+}
+button.disabled:active {
+    transform: none;
 }

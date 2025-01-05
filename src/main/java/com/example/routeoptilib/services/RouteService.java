@@ -10,6 +10,7 @@ import com.example.routeoptilib.persistence.entity.Block;
 import com.example.routeoptilib.models.BlockDataDTO;
 import com.example.routeoptilib.models.OptimisedSuggestionDataDTO;
 import com.example.routeoptilib.persistence.entity.CabDriverRouteMapping;
+import com.example.routeoptilib.persistence.entity.Driver;
 import com.example.routeoptilib.persistence.repository.BlockRepository;
 import com.example.routeoptilib.persistence.repository.CabDriverRouteMappingRepository;
 import com.example.routeoptilib.persistence.repository.CabRepository;
@@ -111,9 +112,15 @@ public class RouteService {
                     routePart.setDistance(scheduleService.calculateDistance(firstStop.getGeoCord(), lastStop.getGeoCord()));
                     routePart.setStartPoint(firstStop.getGeoCord());
                     routePart.setEndPoint(lastStop.getGeoCord());
-                    routePart.setStartTime(LocalTime.of((int) ((firstStop.getPlannedArrivalTime() / 60) % 12), (int) (firstStop.getPlannedArrivalTime() % 60)));
-                    routePart.setEndTime(LocalTime.of((int) ((lastStop.getPlannedArrivalTime() / 60) % 12), (int) (lastStop.getPlannedArrivalTime() % 60)));
+                    routePart.setStartTime(LocalTime.of((int) ((firstStop.getPlannedArrivalTime() / 60) % 24), (int) (firstStop.getPlannedArrivalTime() % 60)));
+                    routePart.setEndTime(LocalTime.of((int) ((lastStop.getPlannedArrivalTime() / 60) % 24), (int) (lastStop.getPlannedArrivalTime() % 60)));
                     return routePart;
+                })
+                .filter(f -> {
+                    return !f.getStartTime().equals(f.getEndTime());
+                })
+                .filter(f -> {
+                    return cabDriverRouteMappingRepository.getByRouteId(buid, f.getId()) == null;
                 })
                 .collect(Collectors.toList());
         Map<CabDriverUnit, List<RoutePart>> map = scheduleService.scheduleCabs(cabs, drivers, routeParts);
@@ -164,7 +171,7 @@ public class RouteService {
         if (CollectionUtils.isNotEmpty(driverDTODTOS)) {
             LoadedBuidsChecker.addLoadedBuid(buid, LoadedBuidsChecker.LoadType.DRIVER);
         }
-        log.info("Loaded {} drivers from API for buid {}", driverDTODTOS.size(), buid);
+        log.info("Loaded {} drivers for buid {}", driverDTODTOS.size(), buid);
         var blocks = blockRepository.findAllByBuidAndType(buid, Constant.DRIVER);
         Map<String, List<Block>> blockMap = Maps.newHashMap();
         for (Block block : blocks) {
@@ -193,7 +200,7 @@ public class RouteService {
         if (CollectionUtils.isNotEmpty(cabDTOList)) {
             LoadedBuidsChecker.addLoadedBuid(buid, LoadedBuidsChecker.LoadType.CAB);
         }
-        log.info("Loaded {} cabs from API for buid {}", cabDTOList.size(), buid);
+        log.info("Loaded {} cabs for buid {}", cabDTOList.size(), buid);
         var blocks = blockRepository.findAllByBuidAndType(buid, Constant.CAB);
         Map<String, List<Block>> blockMap = Maps.newHashMap();
         for (Block block : blocks) {
@@ -243,7 +250,7 @@ public class RouteService {
         if (CollectionUtils.isNotEmpty(result)) {
             LoadedBuidsChecker.addLoadedBuid(buid, LoadedBuidsChecker.LoadType.ROUTE);
         }
-        log.info("Loaded {} routes from API for buid {}", result.size(), buid);
+        log.info("Loaded {} routes for buid {}", result.size(), buid);
         var mappings = cabDriverRouteMappingRepository.findByBuid(buid);
         Map<String, CabDriverRouteMapping> routeIdMapping = mappings.stream()
                 .collect(Collectors.toMap(
@@ -254,7 +261,8 @@ public class RouteService {
             if (Objects.isNull(assignment)) {
                 continue;
             }
-            var driver = driverRepository.findByBuidAndLicense(buid, assignment.getDriverLicense());
+            var drivers = driverRepository.findByBuidAndLicense(buid, assignment.getDriverLicense());
+            var driver = CollectionUtils.isEmpty(drivers) ? new Driver() : drivers.get(0);
             routeDetailDTO.setAssignedDriverId(assignment.getDriverLicense());
             routeDetailDTO.setAssignedDriverName(driver.getName());
             routeDetailDTO.setAssignedCabIdentification(assignment.getCabIdentification());
@@ -269,18 +277,20 @@ public class RouteService {
       return ConversionUtil.convertToResponseDTO(shuttleAvailabilityDTO);
     }
     
-    public boolean createMapping(String buid, String routeId, String driverLicense, String cabId) {
-        CabDriverRouteMapping cabDriverRouteMapping = new CabDriverRouteMapping();
-        cabDriverRouteMapping.setRouteId(routeId);
-        cabDriverRouteMapping.setDriverLicense(driverLicense);
-        cabDriverRouteMapping.setCabIdentification(cabId);
-        cabDriverRouteMapping.setBuid(buid);
-        try {
-            cabDriverRouteMappingRepository.save(cabDriverRouteMapping);
-            return true;
-        } catch (Exception e) {
-            log.error("Error while creating mapping: {}", ExceptionUtils.getStackTrace(e));
+    public boolean createMapping(String buid, List<CabDriverRouteMapping> mappings) {
+        mappings = mappings.stream()
+                .filter(m -> Objects.isNull(cabDriverRouteMappingRepository.getByRouteId(buid, m.getRouteId())))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(mappings)) {
             return false;
         }
+        try {
+            mappings.forEach(m -> m.setBuid(buid));
+            cabDriverRouteMappingRepository.saveAll(mappings);
+        } catch (Exception e) {
+            log.error("Error while creating mappings: {}", ExceptionUtils.getStackTrace(e));
+            return false;
+        }
+        return true;
     }
 }

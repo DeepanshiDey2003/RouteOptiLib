@@ -6,6 +6,7 @@ import com.example.routeoptilib.models.DriverDTO;
 import com.example.routeoptilib.models.RoutePart;
 import com.example.routeoptilib.persistence.entity.Block;
 import com.mis.data.location.STW_Location;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,12 +24,32 @@ import java.util.Map;
 @Slf4j
 public class ScheduleService {
   // Global Properties
-  private static LocalTime LUNCH_BREAK_START = LocalTime.of(13, 0);
-  private static LocalTime LUNCH_BREAK_END = LocalTime.of(14, 0);
-  private static int BREAK_DURATION_MINUTES = 30;
-  private static int BUFFER_DEAD_LEG_TIME_PER_KM_MINUTES = 15;
-  private static int MAX_STRETCH_HOURS = 4;
-  private static int MAX_DUTY_HOURS_PER_DAY = 12;
+  private static LocalTime LUNCH_BREAK_START = LocalTime.of(
+          (GlobalProperties.LUNCH_BREAK_START_TIME_MINUTES_FROM_MIDNIGHT.numValue / 60) % 24,
+          GlobalProperties.LUNCH_BREAK_START_TIME_MINUTES_FROM_MIDNIGHT.numValue % 60);
+  private static LocalTime LUNCH_BREAK_END = LocalTime.of(
+          (GlobalProperties.LUNCH_BREAK_END_TIME_MINUTES_FROM_MIDNIGHT.numValue / 60) % 24,
+          GlobalProperties.LUNCH_BREAK_END_TIME_MINUTES_FROM_MIDNIGHT.numValue % 60);
+  
+  public enum GlobalProperties {
+    BREAK_DURATION_MINUTES(30),
+    BUFFER_DEAD_LEG_TIME_PER_KM_MINUTES(15),
+    MAX_STRETCH_HOURS(4),
+    MAX_DUTY_HOURS_PER_DAY(12),
+    LUNCH_BREAK_START_TIME_MINUTES_FROM_MIDNIGHT(780),
+    LUNCH_BREAK_END_TIME_MINUTES_FROM_MIDNIGHT(860);
+    
+    @Getter
+    int numValue;
+    
+    GlobalProperties(int numValue) {
+      this.numValue = numValue;
+    }
+    
+    public void setValue(int numValue) {
+      this.numValue = numValue;
+    }
+  }
   
   /**
    * Schedules the routeParts intelligently for the available cabDTOS.
@@ -39,24 +60,34 @@ public class ScheduleService {
    */
   public Map<CabDriverUnit, List<RoutePart>> scheduleCabs(List<CabDTO> cabDTOS, List<DriverDTO> driverDTOS, List<RoutePart> routeParts) {
     Map<CabDriverUnit, List<RoutePart>> cabAssignments = new HashMap<>();
+    Map<String, CabDriverUnit> assignedCabs = new HashMap<>();
     
     // Sort routeParts by start time for optimal scheduling
     routeParts.sort(Comparator.comparing(RoutePart::getStartTime));
+    int driverIndex = 0;
     
     for (RoutePart routePart : routeParts) {
       CabDTO assignedCabDTO = null;
       for (CabDTO cabDTO : cabDTOS) {
-        if (driverDTOS.isEmpty()) {
+        if (driverDTOS.size() <= driverIndex) {
           break;
         }
         CabDriverUnit cabDriverUnit = new CabDriverUnit();
-        cabDriverUnit.setCabId(cabDTO.getRegistration());
-        cabDriverUnit.setDriverId(driverDTOS.get(0).getLicense());
-        cabDriverUnit.setDriverName(driverDTOS.get(0).getName());
+        if (assignedCabs.containsKey(cabDTO.getRegistration())) {
+          cabDriverUnit = assignedCabs.get(cabDTO.getRegistration());
+        } else {
+          cabDriverUnit.setCabId(cabDTO.getRegistration());
+          cabDriverUnit.setDriverId(driverDTOS.get(driverIndex).getLicense());
+          cabDriverUnit.setDriverName(driverDTOS.get(driverIndex).getName());
+          cabDriverUnit.setBlocks(driverDTOS.get(driverIndex).getBlocks());
+          cabDriverUnit.getBlocks().addAll(cabDTO.getBlocks());
+        }
         if (canAssignRoute(cabDTO, routePart, cabAssignments.getOrDefault(cabDriverUnit, new ArrayList<>()))) {
           cabAssignments.computeIfAbsent(cabDriverUnit, k -> new ArrayList<>()).add(routePart);
+          cabDTO.getBlocks().add(new Block(cabDTO.getRegistration(), getLongFromLocalTime(routePart.getStartTime()), getLongFromLocalTime(routePart.getEndTime())));
           assignedCabDTO = cabDTO;
-          driverDTOS.removeFirst();
+          assignedCabs.put(cabDriverUnit.getCabId(), cabDriverUnit);
+          driverIndex++;
           break;
         }
       }
@@ -67,6 +98,10 @@ public class ScheduleService {
     }
     
     return cabAssignments;
+  }
+  
+  private static long getLongFromLocalTime(LocalTime time) {
+    return time.getHour() * 60 + (long)(time.getMinute());
   }
   
   /**
@@ -90,7 +125,7 @@ public class ScheduleService {
             .mapToInt(r -> Math.toIntExact(Duration.between(r.getStartTime(), r.getEndTime()).toMinutes()))
             .sum();
     
-    if (totalDutyMinutes + Duration.between(routePart.getStartTime(), routePart.getEndTime()).toMinutes() > MAX_DUTY_HOURS_PER_DAY * 60) {
+    if (totalDutyMinutes + Duration.between(routePart.getStartTime(), routePart.getEndTime()).toMinutes() > (GlobalProperties.MAX_DUTY_HOURS_PER_DAY.getNumValue()) * 60) {
       return false;
     }
     
@@ -99,19 +134,19 @@ public class ScheduleService {
       RoutePart lastRoutePart = assignedRouteParts.get(assignedRouteParts.size() - 1);
       long stretchMinutes = Duration.between(lastRoutePart.getStartTime(), routePart.getEndTime()).toMinutes();
       
-      if (stretchMinutes > MAX_STRETCH_HOURS * 60) {
+      if (stretchMinutes > GlobalProperties.MAX_STRETCH_HOURS.getNumValue() * 60) {
         return false;
       }
       
       // Ensure break duration after stretch
-      if (stretchMinutes > MAX_STRETCH_HOURS * 60 &&
-              Duration.between(lastRoutePart.getEndTime(), routePart.getStartTime()).toMinutes() < BREAK_DURATION_MINUTES) {
+      if (stretchMinutes > GlobalProperties.MAX_STRETCH_HOURS.getNumValue() * 60 &&
+              Duration.between(lastRoutePart.getEndTime(), routePart.getStartTime()).toMinutes() < GlobalProperties.BREAK_DURATION_MINUTES.getNumValue()) {
         return false;
       }
       
       // Add buffer time for dead leg
       double distanceBetweenRoutes = calculateDistance(lastRoutePart.getEndPoint(), routePart.getStartPoint());
-      long bufferTime = (long) (distanceBetweenRoutes * BUFFER_DEAD_LEG_TIME_PER_KM_MINUTES);
+      long bufferTime = (long) (distanceBetweenRoutes * GlobalProperties.BUFFER_DEAD_LEG_TIME_PER_KM_MINUTES.getNumValue());
       
       if (Duration.between(lastRoutePart.getEndTime(), routePart.getStartTime()).toMinutes() < bufferTime) {
         return false;

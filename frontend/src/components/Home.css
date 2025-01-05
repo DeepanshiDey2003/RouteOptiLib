@@ -1,0 +1,62 @@
+.route-table {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+}
+
+.route-table-row {
+    display: flex;
+    gap: 32px;
+    padding: 4px;
+    word-break: break-all;
+}
+
+.route-header {
+    padding: 8px;
+    font-weight: bold;
+}
+
+.route-name-row {
+    flex: 2;
+}
+
+.route-fromto-row {
+    flex: 3;
+}
+
+.route-timings-row {
+    flex: 1.5;
+}
+
+.route-assignment-row {
+    flex: 2;
+}
+
+.route-generate-row {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+}
+
+.route-part {
+    padding: 8px;
+    border-radius: 12px;
+    background-color: rgb(233, 233, 233);
+}
+
+.suggestion {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+}
+
+.route-suggestion-hint {
+    margin-bottom: 4px;
+}
+
+.route-suggestion-driver, .route-suggestion-vehicle {
+    font-weight: bold;
+    font-size: 16px;
+}

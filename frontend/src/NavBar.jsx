@@ -12,9 +12,9 @@ function NavBar() {
         <li className={location.pathname === '/manage-blocks' ? 'active' : ''}>
           <Link to="/manage-blocks">Manage Blocks</Link>
         </li>
-        <li className={location.pathname === '/manage-properties' ? 'active' : ''}>
+        {/* <li className={location.pathname === '/manage-properties' ? 'active' : ''}>
           <Link to="/manage-properties">Manage Properties</Link>
-        </li>
+        </li> */}
       </ul>
     </div>
   );

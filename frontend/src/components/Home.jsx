@@ -4,8 +4,19 @@ import { appConfig } from '../config'
 import { useEffect, useState } from 'react'
 
 function getFormattedTime(timeFromBeginning) {
-    return parseInt(timeFromBeginning / 60, 10) + ":" + (timeFromBeginning % 60)
+    const minutes = String(parseInt(timeFromBeginning / 60, 10) % 24).padStart(2, "0");
+    const seconds = String(timeFromBeginning % 60).padStart(2, "0");
+    return minutes + ":" + seconds;
 }
+
+function abbreviateString(str, maxLength = 64) {
+    if (str.length <= maxLength) {
+        return str;
+    }
+    return str.substring(0, maxLength - 3) + "...";
+}
+
+const isEmpty = (obj) => Object.keys(obj).length === 0;
 
 function getRoutesDTO(data) {
     let routesList = data.filter(item => {
@@ -26,6 +37,8 @@ function getRoutesDTO(data) {
             })
         }
     })
+    console.log(routesList);
+    
     routesList.forEach(route => {
         route.stops.sort((a, b) => {return a.plannedArrivalTime - b.plannedArrivalTime})
     })
@@ -33,7 +46,13 @@ function getRoutesDTO(data) {
 }
 
 function Home() {
-    const [routes, setRoutes] = useState([])
+    const [routes, setRoutes] = useState(undefined)
+    const [suggestions, setSuggestions] = useState({
+        "68511": {
+            driverName: "Abhineet Kelley",
+            vehicleId: "CAB1234"
+        }
+    })
 
     function populateRoutes() {
         axios.get(appConfig.routeEndpoint("/details")).then((res) => {
@@ -50,19 +69,41 @@ function Home() {
         // setRoutes(routesFromServer);
     }, [])
 
-    return <>
-        {
-            routes.length > 0 ?
-            routes.map(route => {
-                return <div className='route-part'>
-                    <span>{route.routeId}</span>
-                    <span>{route.routeName}</span>
-                    <span>{route.stops[0]?.stopName + " to " + route.stops[route.stops.length - 1]?.stopName}</span>
-                    <span>{getFormattedTime(route.stops[0]?.plannedArrivalTime) + " to " + getFormattedTime(route.stops[route.stops.length - 1]?.plannedArrivalTime)}</span>
-                </div>
-            }) : <div>Loading...</div>
-        }    
-    </>
+    return <div>
+        <div className='route-table'>
+            <div className='route-table-row route-header'>
+                <span className='route-name-row'>Name</span>
+                <span className='route-fromto-row'>From / To</span>
+                <span className='route-timings-row'>Timings</span>
+                <span className='route-assignment-row'>Driver / Cab</span>
+                <span className='route-generate-row'></span>
+            </div>
+            {
+                routes != undefined ?
+                (routes.length === 0 ? <div className='message'>No Valid Routes Found</div> : routes.map(route => {
+                    return <div className='route-table-row route-part'>
+                        <span className='route-name-row'>{abbreviateString(route.routeName)}</span>
+                        <span className='route-fromto-row'>{route.stops[0]?.geoCord + " to " + route.stops[route.stops.length - 1]?.geoCord}</span>
+                        <span className='route-timings-row'>{getFormattedTime(route.stops[0]?.plannedArrivalTime) + " to " + getFormattedTime(route.stops[route.stops.length - 1]?.plannedArrivalTime)}</span>
+                        {
+                            isEmpty(suggestions) ? <></> : <span className="route-assignment-row suggestion">
+                                {
+                                    !suggestions[route.routeId] ? <></> : <>
+                                        <span className='route-suggestion-hint'>Suggested:</span>
+                                        <span className='route-suggestion-driver'>Driver: {suggestions[route.routeId].driverName}</span>
+                                        <span className='route-suggestion-vehicle'>Vehicle: {suggestions[route.routeId].vehicleId}</span>    
+                                    </>
+                                }
+                            </span>
+                        }
+                        <span className="route-generate-row">
+                            <button className='primary' type="button">Generate</button>
+                        </span>
+                    </div>
+                })) : <div className='message'>Loading...</div>
+            }
+        </div>    
+    </div>
 }
 
 export default Home

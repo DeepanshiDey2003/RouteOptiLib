@@ -1,6 +1,6 @@
 package com.example.routeoptilib.services;
 
-import com.example.routeoptilib.models.Cab;
+import com.example.routeoptilib.models.CabDTO;
 import com.example.routeoptilib.models.RoutePart;
 import com.example.routeoptilib.persistence.entity.Block;
 import com.mis.data.location.STW_Location;
@@ -29,30 +29,30 @@ public class ScheduleService {
   Logger log = LoggerFactory.getLogger(ScheduleService.class);
   
   /**
-   * Schedules the routeParts intelligently for the available cabs.
+   * Schedules the routeParts intelligently for the available cabDTOS.
    *
-   * @param cabs  List of available cabs
+   * @param cabDTOS  List of available cabDTOS
    * @param routeParts List of routeParts to be covered
    * @return A map of cab to its assigned routeParts
    */
-  public Map<Cab, List<RoutePart>> scheduleCabs(List<Cab> cabs, List<RoutePart> routeParts) {
-    Map<Cab, List<RoutePart>> cabAssignments = new HashMap<>();
+  public Map<CabDTO, List<RoutePart>> scheduleCabs(List<CabDTO> cabDTOS, List<RoutePart> routeParts) {
+    Map<CabDTO, List<RoutePart>> cabAssignments = new HashMap<>();
     
     // Sort routeParts by start time for optimal scheduling
     routeParts.sort(Comparator.comparing(RoutePart::getStartTime));
     
     for (RoutePart routePart : routeParts) {
-      Cab assignedCab = null;
+      CabDTO assignedCabDTO = null;
       
-      for (Cab cab : cabs) {
-        if (canAssignRoute(cab, routePart, cabAssignments.getOrDefault(cab, new ArrayList<>()))) {
-          cabAssignments.computeIfAbsent(cab, k -> new ArrayList<>()).add(routePart);
-          assignedCab = cab;
+      for (CabDTO cabDTO : cabDTOS) {
+        if (canAssignRoute(cabDTO, routePart, cabAssignments.getOrDefault(cabDTO, new ArrayList<>()))) {
+          cabAssignments.computeIfAbsent(cabDTO, k -> new ArrayList<>()).add(routePart);
+          assignedCabDTO = cabDTO;
           break;
         }
       }
       
-      if (assignedCab == null) {
+      if (assignedCabDTO == null) {
         log.warn("No cab available for routePart from {} to {} starting at {}", routePart.getStartPoint(), routePart.getEndPoint(), routePart.getStartTime());
       }
     }
@@ -61,15 +61,15 @@ public class ScheduleService {
   }
   
   /**
-   * Checks if a cab can be assigned a routePart without violating any constraints.
+   * Checks if a cabDTO can be assigned a routePart without violating any constraints.
    *
-   * @param cab           The cab to check
+   * @param cabDTO           The cabDTO to check
    * @param routePart         The routePart to be assigned
-   * @param assignedRouteParts Already assigned routes for the cab
-   * @return True if the cab can be assigned the routePart, false otherwise
+   * @param assignedRouteParts Already assigned routes for the cabDTO
+   * @return True if the cabDTO can be assigned the routePart, false otherwise
    */
-  private boolean canAssignRoute(Cab cab, RoutePart routePart, List<RoutePart> assignedRouteParts) {
-    for (Block block : cab.getBlocks()) {
+  private boolean canAssignRoute(CabDTO cabDTO, RoutePart routePart, List<RoutePart> assignedRouteParts) {
+    for (Block block : cabDTO.getBlocks()) {
       if (block.overlapsWith(routePart.getStartTime(), routePart.getEndTime())) {
         return false;
       }

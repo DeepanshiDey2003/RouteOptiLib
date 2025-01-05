@@ -11,6 +11,5 @@ public interface BlockRepository extends JpaRepository<Block, Integer> {
     
     List<Block> findAllByBlockId(String blockId);
     List<Block> findAllByBlockIdIn(List<String> blockIds);
-    
-    
+    List<Block> findAllByBuidAndType(String buid, String type);
 }

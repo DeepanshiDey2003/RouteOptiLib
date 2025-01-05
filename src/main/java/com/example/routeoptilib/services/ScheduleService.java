@@ -24,13 +24,6 @@ import java.util.Map;
 @Slf4j
 public class ScheduleService {
   // Global Properties
-  private static LocalTime LUNCH_BREAK_START = LocalTime.of(
-          (GlobalProperties.LUNCH_BREAK_START_TIME_MINUTES_FROM_MIDNIGHT.numValue / 60) % 24,
-          GlobalProperties.LUNCH_BREAK_START_TIME_MINUTES_FROM_MIDNIGHT.numValue % 60);
-  private static LocalTime LUNCH_BREAK_END = LocalTime.of(
-          (GlobalProperties.LUNCH_BREAK_END_TIME_MINUTES_FROM_MIDNIGHT.numValue / 60) % 24,
-          GlobalProperties.LUNCH_BREAK_END_TIME_MINUTES_FROM_MIDNIGHT.numValue % 60);
-  
   public enum GlobalProperties {
     BREAK_DURATION_MINUTES(30),
     BUFFER_DEAD_LEG_TIME_PER_KM_MINUTES(15),
@@ -152,7 +145,12 @@ public class ScheduleService {
         return false;
       }
     }
-    
+    LocalTime LUNCH_BREAK_START = LocalTime.of(
+            (GlobalProperties.LUNCH_BREAK_START_TIME_MINUTES_FROM_MIDNIGHT.numValue / 60) % 24,
+            GlobalProperties.LUNCH_BREAK_START_TIME_MINUTES_FROM_MIDNIGHT.numValue % 60);
+    LocalTime LUNCH_BREAK_END = LocalTime.of(
+            (GlobalProperties.LUNCH_BREAK_END_TIME_MINUTES_FROM_MIDNIGHT.numValue / 60) % 24,
+            GlobalProperties.LUNCH_BREAK_END_TIME_MINUTES_FROM_MIDNIGHT.numValue % 60);
     // Ensure no routes during lunch break
     if (routePart.getStartTime().isBefore(LUNCH_BREAK_END) && routePart.getEndTime().isAfter(LUNCH_BREAK_START)) {
       return false;

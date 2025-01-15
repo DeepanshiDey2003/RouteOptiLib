@@ -12,6 +12,7 @@ import com.example.routeoptilib.persistence.repository.DriverRepository;
 import com.example.routeoptilib.persistence.repository.RouteRepository;
 import com.example.routeoptilib.services.RouteService;
 import com.example.routeoptilib.services.ScheduleService;
+import com.example.routeoptilib.utils.ConversionUtil;
 import com.example.routeoptilib.utils.LoadedBuidsChecker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +85,11 @@ public class RouteController {
   public Map<String, Integer> getProperties(@PathVariable("buid") String buid) {
       Map<String, Integer> properties = new HashMap<>();
       for (ScheduleService.GlobalProperties global : ScheduleService.GlobalProperties.values()) {
+        if (ScheduleService.GlobalProperties.LUNCH_BREAK_START_TIME_MINUTES_FROM_MIDNIGHT.equals(global)
+                || ScheduleService.GlobalProperties.LUNCH_BREAK_END_TIME_MINUTES_FROM_MIDNIGHT.equals(global)) {
+          properties.put(global.name(), ConversionUtil.getFormattedTime(global.getNumValue()));
+          continue;
+        }
         properties.put(global.name(), global.getNumValue());
       }
       return properties;
@@ -94,6 +100,11 @@ public class RouteController {
       for (ScheduleService.GlobalProperties global : ScheduleService.GlobalProperties.values()) {
         var value = properties.get(global.name());
         if (value != null) {
+          if (ScheduleService.GlobalProperties.LUNCH_BREAK_START_TIME_MINUTES_FROM_MIDNIGHT.equals(global)
+                  || ScheduleService.GlobalProperties.LUNCH_BREAK_END_TIME_MINUTES_FROM_MIDNIGHT.equals(global)) {
+            global.setValue(ConversionUtil.getHoursMinsFromFormattedTime(value));
+            continue;
+          }
           global.setValue(value);
         }
       }

@@ -142,4 +142,12 @@ public class ConversionUtil {
             })
             .collect(Collectors.toList());
   }
+  
+  public static int getFormattedTime(int numValue) {
+      return ((numValue / 60) * 100) + numValue % 60;
+  }
+  
+  public static int getHoursMinsFromFormattedTime(int value) {
+      return ((value / 100) * 60) + (value % 100);
+  }
 }

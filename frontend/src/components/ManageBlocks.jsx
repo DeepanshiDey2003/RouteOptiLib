@@ -56,8 +56,8 @@ function ManageBlocks() {
                         <div key={key} className="property-row">
                             <label>{key}:</label>
                             <input
-                                type="number"
-                                value={props[key] || 0}
+                                type="text"
+                                value={props[key] || "0"}
                                 onChange={(e) => handleInputChange(key, e.target.value)}
                             />
                         </div>
